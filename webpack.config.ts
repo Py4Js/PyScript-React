@@ -1,6 +1,8 @@
+import GeneratePackageJsonPlugin from "generate-package-json-webpack-plugin";
 import { join } from "path";
-import { Configuration } from "webpack";
+import { Configuration, WebpackPluginInstance } from "webpack";
 import nodeExternals from "webpack-node-externals";
+import { dependencies } from "./package.json";
 
 type WebpackArguments = {
   mode: "production" | "development";
@@ -14,8 +16,11 @@ type SetupConfig = (
 const setupConfig: SetupConfig = (): Configuration => {
   return {
     output: {
-      path: join(process.cwd(), "destination"),
-      library: "pyanalize_react",
+      path: join(process.cwd(), "library"),
+      library: "pyscript_react",
+      filename: "index.js",
+      libraryTarget: "umd",
+      globalObject: "this",
     },
     resolve: {
       extensions: [".js", ".ts", ".tsx", ".jsx", ".mjs", ".wasm", ".json"],
@@ -31,6 +36,19 @@ const setupConfig: SetupConfig = (): Configuration => {
     entry: "./source/index.tsx",
     mode: "production",
     devtool: "source-map",
+    plugins: [
+      new GeneratePackageJsonPlugin(
+        {
+          name: "pyscript-react",
+          version: "1.0.0",
+          main: "./index.js",
+          types: "./index.d.ts",
+        },
+        {
+          excludeDependencies: [...Object.keys(dependencies), "core-js"],
+        },
+      ) as WebpackPluginInstance,
+    ],
     module: {
       rules: [
         {
